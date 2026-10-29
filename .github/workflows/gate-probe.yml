@@ -1,0 +1,26 @@
+name: gate-probe
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - name: outsider login (exact target snippet)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_USER_LOGIN: torvalds
+        run: |
+          set -euo pipefail
+          PERM=$(gh api repos/$GITHUB_REPOSITORY/collaborators/$COMMENT_USER_LOGIN/permission --jq '.permission' 2>/dev/null || echo "none")
+          echo "OUTSIDER_PERM=[$PERM]"
+      - name: owner login (exact target snippet)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_USER_LOGIN: Ety60
+        run: |
+          set -euo pipefail
+          PERM=$(gh api repos/$GITHUB_REPOSITORY/collaborators/$COMMENT_USER_LOGIN/permission --jq '.permission' 2>/dev/null || echo "none")
+          echo "OWNER_PERM=[$PERM]"
