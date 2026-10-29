@@ -1,0 +1,11 @@
+name: pr probe
+on: pull_request
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hi > lcov.info
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-ubuntu-latest-20.x
+          path: lcov.info
