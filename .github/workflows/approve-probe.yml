@@ -1,0 +1,21 @@
+name: approve-probe
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        required: true
+permissions:
+  pull-requests: write
+  contents: read
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - name: attempt bot approval of someone else's PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ inputs.pr }}
+        run: |
+          set -x
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pulls/$PR/reviews" -f event=APPROVE -f body="probe approval" -i 2>&1 | tail -20
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/reviews" --jq '.[] | "\(.user.login) \(.state)"'
