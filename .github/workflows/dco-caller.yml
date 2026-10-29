@@ -4,6 +4,13 @@ on:
   issue_comment:
     types: [created]
 
+# PoC-org workaround: PDFtoMark disallows write default GITHUB_TOKEN permissions.
+# Adobe's org default grants read/write, so the target caller needs no block.
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
 jobs:
   check:
     if: github.event.issue.pull_request != null && github.event.comment.body == '/upload-coverage'
